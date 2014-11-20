@@ -1,0 +1,68 @@
+function LDA(package)
+file = importdata('./data/Smarket.txt');
+data = file.data;
+header = file.textdata;
+% gnd = {'1','1','1','1','0','0','0'};
+% X=[2.93 6.634; 2.53 7.79; 3.57 5.65;3.16 5.47;2.58 4.44; 2.16 6.22; 3.27 3.52];
+
+main_item = 'Direction';
+comp_items = {'Lag1', 'Lag2'};
+func_summary(data, header, main_item, comp_items);
+end
+
+function func_summary(data, header, main_item, comp_items)
+main_col = find(strcmp(header, main_item));
+if ~main_col
+    error('找不到主元素！');
+end
+
+% prepare matrix included selected features
+sampleMatrix = [];
+for i=1:size(comp_items, 2)
+    col = find(strcmp(header, comp_items{i}));
+    if col
+        sampleMatrix = [sampleMatrix, data(:, col)];
+    end
+end
+category = data(:,size(data, 2));
+sampleMatrix 
+% iteration
+for times=1:size(sampleMatrix, 2)-1
+    eigenVector = func_eigenVector(sampleMatrix, category);
+    sampleMatrix = sampleMatrix * eigenVector;
+end
+
+disp(sampleMatrix);
+
+end
+
+
+function res = func_eigenVector(X, gnd)
+gnd = {'1','1','1','1','0','0','0'};
+ X=[2.93 6.634; 2.53 7.79; 3.57 5.65;3.16 5.47;2.58 4.44; 2.16 6.22; 3.27 3.52];
+% ====== Initialization 
+[nSmp,nFea] = size(X); 
+classLabel = unique(gnd); 
+nClass = length(classLabel); 
+
+sampleMean = mean(X); 
+ 
+MMM = zeros(nFea, nFea); 
+for i = 1:nClass, 
+	index = find(strcmp(gnd,classLabel(i))); 
+	classMean = mean(X(index, :)); 
+	MMM = MMM + length(index)*(classMean')*classMean; 
+end 
+W = X'*X - MMM; 
+B = MMM - nSmp*sampleMean'*sampleMean; 
+ 
+W = (W + W')/2; 
+B = (B + B')/2; 
+ 
+[eigvector, eigvalue] = eigs(B,W, nClass - 1); 
+
+for i = 1:size(eigvector,2) 
+    eigvector(:,i) = eigvector(:,i)./norm(eigvector(:,i)); 
+end 
+ res = eigvector;
+end
